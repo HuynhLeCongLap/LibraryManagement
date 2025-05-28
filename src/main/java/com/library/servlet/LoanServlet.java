@@ -46,31 +46,35 @@ public class LoanServlet extends HttpServlet {
         }
 
         String action = req.getParameter("action");
+
         if ("return".equals(action)) {
+            // Xử lý trả sách
             handleReturn(req, resp);
-            return;
+            return; // handleReturn đã redirect rồi nên thoát luôn
         }
 
+        // Không phải trả sách -> tải dữ liệu và forward trang
+        loadDataAndForward(req, resp);
+    }
+
+
+    private void loadDataAndForward(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
             List<Loan> allLoans = loanDAO.getAllLoans();
             List<Book> allBooks = bookDAO.getAllBooks();
             List<Member> allMembers = memberDAO.getAllMembers();
 
             for (Loan loan : allLoans) {
-                try {
-                    // Gán thông tin sách
-                    Book book = bookDAO.getBookById(loan.getBookId());
-                    loan.setBook(book != null ? book : createDefaultBook(loan.getBookId()));
-                    // Gán thông tin thành viên
-                    Member member = memberDAO.getMemberById(loan.getMemberId());
-                    loan.setMember(member != null ? member : createDefaultMember(loan.getMemberId()));
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                Book book = bookDAO.getBookById(loan.getBookId());
+                loan.setBook(book != null ? book : createDefaultBook(loan.getBookId()));
+
+                Member member = memberDAO.getMemberById(loan.getMemberId());
+                loan.setMember(member != null ? member : createDefaultMember(loan.getMemberId()));
             }
 
             List<Book> availableBooks = bookDAO.getAvailableBooks();
 
+            // Sắp xếp theo yêu cầu
             allLoans.sort(Comparator.comparing(
                             Loan::getReturnDate, Comparator.nullsFirst(Comparator.naturalOrder()))
                     .thenComparing(Loan::getBorrowDate, Comparator.reverseOrder())
@@ -100,6 +104,20 @@ public class LoanServlet extends HttpServlet {
             req.setAttribute("totalPages", totalPages);
             req.setAttribute("availableBooks", availableBooks);
             req.setAttribute("allMembers", allMembers);
+
+            // Lấy thông báo success/error từ session rồi set vào request, sau đó xoá trong session
+            HttpSession session = req.getSession();
+            String success = (String) session.getAttribute("success");
+            String error = (String) session.getAttribute("error");
+            if (success != null) {
+                req.setAttribute("success", success);
+                session.removeAttribute("success");
+            }
+            if (error != null) {
+                req.setAttribute("error", error);
+                session.removeAttribute("error");
+            }
+
             req.getRequestDispatcher("/admin/loans.jsp").forward(req, resp);
         } catch (SQLException e) {
             req.setAttribute("error", "Lỗi khi lấy danh sách khoản vay: " + e.getMessage());
@@ -109,6 +127,7 @@ public class LoanServlet extends HttpServlet {
             req.getRequestDispatcher("/admin/loans.jsp").forward(req, resp);
         }
     }
+
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -172,55 +191,25 @@ public class LoanServlet extends HttpServlet {
         }
     }
 
-    private void handleReturn(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    private void handleReturn(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String loanId = req.getParameter("id");
         try {
             Loan loan = loanDAO.getLoanById(Integer.parseInt(loanId));
             if (loan == null) {
-                req.setAttribute("error", "Khoản vay không tồn tại.");
+                req.getSession().setAttribute("error", "Khoản vay không tồn tại.");
             } else {
-                System.out.println("Trước khi trả: Loan ID = " + loan.getId() + ", overdue_fee = " + loan.getOverdueFee() + ", fee_strategy = " + loan.getFeeStrategy());
                 loan.setReturnDate(LocalDate.now());
-                System.out.println("Sau khi setReturnDate: Loan ID = " + loan.getId() + ", overdue_fee = " + loan.getOverdueFee());
                 loanDAO.updateLoan(loan);
                 String strategyDisplay = "daily".equalsIgnoreCase(loan.getFeeStrategy()) ? "Theo ngày" : "Theo số lượng";
-                req.setAttribute("success", "Trả sách thành công! Phí trễ hạn: " + loan.getOverdueFee() + " USD (" + strategyDisplay + ")");
+                req.getSession().setAttribute("success", "Trả sách thành công! Phí trễ hạn: " + loan.getOverdueFee() + " USD (" + strategyDisplay + ")");
             }
-
-            List<Loan> allLoans = loanDAO.getAllLoans();
-            for (Loan l : allLoans) {
-                try {
-                    // Gán thông tin sách
-                    Book book = bookDAO.getBookById(l.getBookId());
-                    l.setBook(book != null ? book : createDefaultBook(l.getBookId()));
-                    // Gán thông tin thành viên
-                    Member member = memberDAO.getMemberById(l.getMemberId());
-                    l.setMember(member != null ? member : createDefaultMember(l.getMemberId()));
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            allLoans.sort(Comparator.comparing(
-                            Loan::getReturnDate, Comparator.nullsFirst(Comparator.naturalOrder()))
-                    .thenComparing(Loan::getBorrowDate, Comparator.reverseOrder())
-                    .thenComparing(Loan::getReturnDate, Comparator.nullsLast(Comparator.reverseOrder())));
-
-            int totalItems = allLoans.size();
-            int totalPages = (int) Math.ceil((double) totalItems / ITEMS_PER_PAGE);
-            int page = 1;
-            int start = (page - 1) * ITEMS_PER_PAGE;
-            int end = Math.min(start + ITEMS_PER_PAGE, totalItems);
-            List<Loan> loansForPage = (totalItems > 0) ? allLoans.subList(start, end) : List.of();
-            req.setAttribute("loans", loansForPage);
-            req.setAttribute("currentPage", page);
-            req.setAttribute("totalPages", totalPages);
-            req.getRequestDispatcher("/admin/loans.jsp").forward(req, resp);
         } catch (SQLException e) {
-            req.setAttribute("error", "Lỗi khi trả sách: " + e.getMessage());
-            req.getRequestDispatcher("/admin/loans.jsp").forward(req, resp);
+            req.getSession().setAttribute("error", "Lỗi khi trả sách: " + e.getMessage());
         }
+        // Chuyển hướng về trang danh sách khoản vay (không kèm tham số action)
+        resp.sendRedirect(req.getContextPath() + "/admin/loans");
     }
+
     // Phương thức tạo sách mặc định bằng BookFactory
     private Book createDefaultBook(int id) {
         BookFactory factory = new AcademicBookFactory();
