@@ -62,6 +62,8 @@
         <input type="text" class="form-control tiny-input" name="title" placeholder="Tiêu đề" style="width: 200px;">
         <input type="text" class="form-control tiny-input" name="author" placeholder="Tác giả" style="width: 200px;">
 
+
+
         <select class="form-control tiny-select" name="type" style="width: 130px;">
             <option value="">-- Loại sách --</option>
             <option value="Printed">Sách giấy</option>

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MemberDAO {
+    // Lấy thông tin thành viên theo tên đăng nhập
     public Member getMemberByUsername(String username) throws SQLException {
         String sql = "SELECT * FROM members WHERE username = ?";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -26,6 +27,7 @@ public class MemberDAO {
         return null;
     }
 
+    // Lấy thông tin thành viên theo ID
     public Member getMemberById(int id) throws SQLException {
         String sql = "SELECT * FROM members WHERE id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -41,6 +43,7 @@ public class MemberDAO {
         return null;
     }
 
+    // Thêm một thành viên mới vào cơ sở dữ liệu
     public void addMember(Member member) throws SQLException {
         String sql = "INSERT INTO members (username, password, full_name, role) VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -53,6 +56,7 @@ public class MemberDAO {
         }
     }
 
+    // Cập nhật thông tin thành viên trong cơ sở dữ liệu
     public void updateMember(Member member) throws SQLException {
         String sql = "UPDATE members SET username = ?, password = ?, full_name = ?, role = ? WHERE id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -66,11 +70,12 @@ public class MemberDAO {
         }
     }
 
+    // Xóa thành viên và các bản ghi mượn liên quan khỏi cơ sở dữ liệu
     public void deleteMember(int id) throws SQLException {
         Connection conn = null;
         try {
             conn = DatabaseConfig.getConnection();
-            conn.setAutoCommit(false);
+            conn.setAutoCommit(false); // Bắt đầu giao dịch
 
             String deleteLoansSql = "DELETE FROM loans WHERE member_id = ?";
             try (PreparedStatement deleteLoansStmt = conn.prepareStatement(deleteLoansSql)) {
@@ -87,20 +92,21 @@ public class MemberDAO {
                 }
             }
 
-            conn.commit();
+            conn.commit(); // Hoàn tất giao dịch
         } catch (SQLException e) {
             if (conn != null) {
-                conn.rollback();
+                conn.rollback(); // Hoàn tác giao dịch nếu có lỗi
             }
             throw e;
         } finally {
             if (conn != null) {
-                conn.setAutoCommit(true);
-                conn.close();
+                conn.setAutoCommit(true); // Đặt lại auto-commit
+                conn.close(); // Đóng kết nối
             }
         }
     }
 
+    // Lấy tất cả thành viên từ cơ sở dữ liệu
     public List<Member> getAllMembers() throws SQLException {
         List<Member> members = new ArrayList<>();
         String sql = "SELECT * FROM members";
@@ -116,6 +122,7 @@ public class MemberDAO {
         return members;
     }
 
+    // Tìm kiếm thành viên theo các tiêu chí (ID, tên đăng nhập, họ tên, vai trò)
     public List<Member> searchMembers(Integer id, String username, String fullName, String role) throws SQLException {
         List<Member> members = new ArrayList<>();
 
@@ -162,7 +169,7 @@ public class MemberDAO {
         return members;
     }
 
-    // Thêm phương thức kiểm tra username đã tồn tại hay chưa
+    // Kiểm tra xem tên đăng nhập đã tồn tại trong cơ sở dữ liệu hay chưa
     public boolean isUsernameExists(String username) throws SQLException {
         String sql = "SELECT COUNT(*) FROM members WHERE username = ?";
         try (Connection conn = DatabaseConfig.getConnection();

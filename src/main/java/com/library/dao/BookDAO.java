@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BookDAO {
+    // Thêm một cuốn sách mới vào cơ sở dữ liệu
     public void addBook(Book book) throws SQLException {
         String sql = "INSERT INTO books (title, author, type) VALUES (?, ?, ?)";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -26,6 +27,7 @@ public class BookDAO {
         }
     }
 
+    // Lấy tất cả sách từ cơ sở dữ liệu
     public List<Book> getAllBooks() throws SQLException {
         List<Book> books = new ArrayList<>();
         String sql = "SELECT * FROM books";
@@ -48,6 +50,7 @@ public class BookDAO {
         return books;
     }
 
+    // Lấy sách theo ID từ cơ sở dữ liệu
     public Book getBookById(int id) throws SQLException {
         String sql = "SELECT * FROM books WHERE id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -70,6 +73,7 @@ public class BookDAO {
         return null;
     }
 
+    // Cập nhật thông tin sách trong cơ sở dữ liệu
     public void updateBook(Book book) throws SQLException {
         String sql = "UPDATE books SET title = ?, author = ?, type = ? WHERE id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -82,6 +86,7 @@ public class BookDAO {
         }
     }
 
+    // Xóa sách theo ID và các bản ghi liên quan (ví dụ: mượn sách)
     public void deleteBook(int id) throws SQLException {
         String deleteLoansSql = "DELETE FROM loans WHERE book_id = ?";
         String deleteBookSql = "DELETE FROM books WHERE id = ?";
@@ -89,7 +94,7 @@ public class BookDAO {
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement deleteLoansStmt = conn.prepareStatement(deleteLoansSql);
              PreparedStatement deleteBookStmt = conn.prepareStatement(deleteBookSql)) {
-            conn.setAutoCommit(false);
+            conn.setAutoCommit(false); // Bắt đầu giao dịch
 
             deleteLoansStmt.setInt(1, id);
             deleteLoansStmt.executeUpdate();
@@ -97,12 +102,14 @@ public class BookDAO {
             deleteBookStmt.setInt(1, id);
             deleteBookStmt.executeUpdate();
 
-            conn.commit();
+            conn.commit(); // Hoàn tất giao dịch
         } catch (SQLException e) {
+            // Ném lại ngoại lệ với thông báo rõ ràng hơn
             throw new SQLException("Loi khi xoa sach: " + e.getMessage(), e);
         }
     }
 
+    // Đánh dấu sách là yêu thích
     public void markAsFavorite(int id) throws SQLException {
         String sql = "UPDATE books SET is_favorite = TRUE WHERE id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -112,6 +119,7 @@ public class BookDAO {
         }
     }
 
+    // Bỏ đánh dấu sách là yêu thích
     public void unmarkAsFavorite(int id) throws SQLException {
         String sql = "UPDATE books SET is_favorite = FALSE WHERE id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -121,6 +129,7 @@ public class BookDAO {
         }
     }
 
+    // Lấy danh sách các sách đang có sẵn (chưa được mượn)
     public List<Book> getAvailableBooks() throws SQLException {
         List<Book> books = new ArrayList<>();
         String sql = "SELECT b.* FROM books b LEFT JOIN loans l ON b.id = l.book_id AND l.return_date IS NULL WHERE l.book_id IS NULL";
@@ -143,6 +152,7 @@ public class BookDAO {
         return books;
     }
 
+    // Tìm kiếm sách dựa trên các tiêu chí (ID, tiêu đề, tác giả, thể loại, yêu thích)
     public List<Book> searchBooks(String idStr, String title, String author, String type, String favoriteStr) throws SQLException {
         List<Book> books = new ArrayList<>();
 
@@ -189,6 +199,7 @@ public class BookDAO {
         return books;
     }
 
+    // Phương thức trợ giúp để tạo đối tượng Book từ ResultSet
     private Book extractBookFromResultSet(ResultSet rs) throws SQLException {
         int id = rs.getInt("id");
         String title = rs.getString("title");

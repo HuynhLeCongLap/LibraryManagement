@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LoanDAO {
+    // Thêm một bản ghi mượn sách mới vào cơ sở dữ liệu
     public void addLoan(Loan loan) throws SQLException {
         String sql = "INSERT INTO loans (book_id, member_id, borrow_date, due_date, fee_strategy) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -27,6 +28,7 @@ public class LoanDAO {
         }
     }
 
+    // Lấy tất cả các bản ghi mượn sách từ cơ sở dữ liệu
     public List<Loan> getAllLoans() throws SQLException {
         List<Loan> loans = new ArrayList<>();
         String sql = "SELECT * FROM loans";
@@ -57,6 +59,7 @@ public class LoanDAO {
         return loans;
     }
 
+    // Lấy một bản ghi mượn sách theo ID từ cơ sở dữ liệu
     public Loan getLoanById(int id) throws SQLException {
         String sql = "SELECT * FROM loans WHERE id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
@@ -81,6 +84,7 @@ public class LoanDAO {
         return null;
     }
 
+    // Lấy danh sách các bản ghi mượn sách của một thành viên
     public List<Loan> getLoansByMember(int memberId) throws SQLException {
         List<Loan> loans = new ArrayList<>();
         String sql = "SELECT * FROM loans WHERE member_id = ?";
@@ -106,6 +110,7 @@ public class LoanDAO {
         return loans;
     }
 
+    // Cập nhật thông tin bản ghi mượn sách (ví dụ: ngày trả, phí quá hạn)
     public void updateLoan(Loan loan) throws SQLException {
         String sql = "UPDATE loans SET return_date = ?, overdue_fee = ?, fee_strategy = ? WHERE id = ?";
         try (Connection conn = DatabaseConfig.getConnection();

@@ -1,6 +1,5 @@
-CREATE DATABASE library;
-USE library;
-
+create database library;
+use library;
 CREATE TABLE books (
                        id INT AUTO_INCREMENT PRIMARY KEY,
                        title VARCHAR(255) NOT NULL,
@@ -44,13 +43,31 @@ ALTER TABLE loans
 
 ALTER TABLE loans ADD COLUMN fee_strategy VARCHAR(20);
 
+INSERT INTO books (id, title, author, type, is_favorite) VALUES
+                                                             (1, 'Hay', 'L', 'Printed', FALSE),
+                                                             (2, 'Tuổi trẻ đáng giá bao nhiêu?', 'Rosie Nguyễn', 'Printed', TRUE),
+                                                             (3, 'Đắc nhân tâm', 'Dale Carnegie', 'Printed', FALSE),
+                                                             (4, 'Tôi thấy hoa vàng trên cỏ xanh', 'Nguyễn Nhật Ánh', 'Printed', TRUE),
+                                                             (5, 'Cho tôi xin một vé đi tuổi thơ', 'Nguyễn Nhật Ánh', 'Printed', TRUE),
+                                                             (6, 'Người Nam Châm - Bí mật của luật hấp dẫn', 'Jack Canfield', 'Printed', FALSE),
+                                                             (7, 'Quẳng gánh lo đi và vui sống', 'Dale Carnegie', 'Printed', FALSE),
+                                                             (8, 'Bên thắng cuộc', 'Huy Đức', 'Printed', FALSE),
+                                                             (9, 'Số đỏ', 'Vũ Trọng Phụng', 'Printed', TRUE),
+                                                             (10, 'Tắt đèn', 'Ngô Tất Tố', 'Printed', TRUE),
+                                                             (11, 'Lão Hạc', 'Nam Cao', 'Printed', FALSE),
+                                                             (12, 'Sách Mẫu Printed', 'Tác giả A', 'Printed', FALSE),
+                                                             (13, 'Clean Code: A Handbook of Agile Software Craftsmanship', 'Robert C. Martin', 'EBook', TRUE),
+                                                             (14, 'Atomic Habits', 'James Clear', 'EBook', FALSE),
+                                                             (15, 'Spring Boot Guide', 'Craig Walls', 'EBook', TRUE),
+                                                             (16, 'Effective Java', 'Joshua Bloch', 'EBook', FALSE);
+
 -- Thêm dữ liệu mẫu
 INSERT INTO loans (book_id, member_id, borrow_date, due_date, return_date, fee_strategy)
 VALUES
-    (1, 2, '2025-05-20', '2025-05-26', NULL, 'daily'),    -- Hạn trả 26/05, chưa trả, trễ 2 ngày (tính đến 27/05/2025)
-    (2, 4, '2025-05-20', '2025-05-26', NULL, 'quantity'), -- Hạn trả 26/05, chưa trả, trễ 2 ngày
-    (3, 6, '2025-05-20', '2025-05-27', NULL, 'daily'),   -- Hạn trả 27/05, chưa trả, trễ 1 ngày
-    (4, 7, '2025-05-20', '2025-05-28', NULL, 'daily');  -- Hạn trả 28/05, chưa trả, chưa trễ
+    (9, 2, '2025-05-20', '2025-05-26', NULL, 'daily'),    -- Hạn trả 26/05, chưa trả, trễ 1 ngày (tính đến 27/05/2025)
+    (10, 10, '2025-05-20', '2025-05-26', NULL, 'quantity'), -- Hạn trả 26/05, chưa trả, trễ 1 ngày
+    (11, 12, '2025-05-20', '2025-05-27', NULL, 'daily');   -- Hạn trả 27/05, chưa trả, chưa trễ
+
 -- Tính phí trễ hạn
 UPDATE loans
 SET overdue_fee = CASE
@@ -78,3 +95,7 @@ SELECT * FROM loans WHERE return_date IS NULL;
 -- Xóa danh sách đã mượn ở quản lý mượn sách admin và đặt id lại về 1
 DELETE FROM loans;
 ALTER TABLE loans AUTO_INCREMENT = 1;
+
+ALTER TABLE members MODIFY username VARCHAR(255) NULL;
+ALTER TABLE members DROP INDEX username; -- bỏ ràng buộc UNIQUE
+
