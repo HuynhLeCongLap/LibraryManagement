@@ -14,6 +14,14 @@
             margin-top: 1rem;
             justify-content: center;
         }
+        /* CSS mới để làm nhỏ cỡ chữ của select và option */
+        .fee-strategy {
+            font-size: 0.85em; /* Giảm cỡ chữ của hộp chọn */
+            padding: 0.25rem 0.5rem; /* Tùy chỉnh padding để trông gọn gàng hơn */
+        }
+        .fee-strategy option {
+            font-size: 0.85em; /* Đảm bảo cỡ chữ của từng option bên trong */
+        }
     </style>
 </head>
 <body>
